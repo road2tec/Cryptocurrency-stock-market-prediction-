@@ -17,11 +17,20 @@ const UserDashboard = () => {
     const [history, setHistory] = useState([]);
     const [ticker, setTicker] = useState({ BTC: 42000, ETH: 2800, DOGE: 0.15 });
     const navigate = useNavigate();
+    const [user, setUser] = useState({ name: 'Trader', email: 'trader@example.com' });
+
+    useEffect(() => {
+        const storedName = localStorage.getItem('name');
+        const storedEmail = localStorage.getItem('email');
+        if (storedName) setUser(prev => ({ ...prev, name: storedName }));
+        if (storedEmail) setUser(prev => ({ ...prev, email: storedEmail }));
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('role');
-        localStorage.removeItem('user');
+        localStorage.removeItem('name');
+        localStorage.removeItem('email');
         navigate('/login');
     };
 
@@ -51,7 +60,10 @@ const UserDashboard = () => {
         setLoading(true);
         setPrediction(null);
         try {
-            const res = await axios.post('http://localhost:5000/api/predict', { coin });
+            const res = await axios.post('http://localhost:5000/api/predict', { 
+                coin, 
+                email: user.email 
+            });
             setPrediction(res.data);
             setActiveTab('market'); // Auto-switch to market view to show result
 
@@ -87,8 +99,8 @@ const UserDashboard = () => {
         switch (activeTab) {
             case 'market': return <MarketView coin={coin} prediction={prediction} loading={loading} handlePredict={handlePredict} setCoin={setCoin} generateChartData={generateChartData} />;
             case 'history': return <HistoryView history={history} />;
-            case 'settings': return <SettingsView />;
-            default: return <Overview ticker={ticker} history={history} handlePredict={handlePredict} setCoin={setCoin} coin={coin} loading={loading} />;
+            case 'settings': return <SettingsView user={user} />;
+            default: return <Overview ticker={ticker} history={history} handlePredict={handlePredict} setCoin={setCoin} coin={coin} loading={loading} user={user} />;
         }
     };
 
@@ -124,8 +136,8 @@ const UserDashboard = () => {
                                 <User size={20} />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-gray-900">Trader Account</p>
-                                <p className="text-xs text-gray-400">Pro Plan</p>
+                                <p className="text-sm font-bold text-gray-900">{user.name}</p>
+                                <p className="text-xs text-gray-400">{user.email}</p>
                             </div>
                         </div>
                         <button onClick={handleLogout} className="w-full py-2 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-gray-600">
@@ -141,7 +153,7 @@ const UserDashboard = () => {
                 <header className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 py-4 flex justify-between items-center z-10 text-gray-500">
                     <div>
                         <h2 className="text-xl font-bold text-gray-800 capitalize">{activeTab}</h2>
-                        <p className="text-xs">Welcome back, Trader</p>
+                        <p className="text-xs">Welcome back, {user.name}</p>
                     </div>
                     {/* Live Ticker Marquee */}
                     <div className="flex-1 mx-12 overflow-hidden mask-gradient relative h-8">
@@ -168,7 +180,7 @@ const UserDashboard = () => {
 
 // --- SUB-VIEWS ---
 
-const Overview = ({ ticker, history, handlePredict, setCoin, coin, loading }) => (
+const Overview = ({ ticker, history, handlePredict, setCoin, coin, loading, user }) => (
     <div className="space-y-8 animate-fade-in-up">
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between">
@@ -371,21 +383,21 @@ const HistoryView = ({ history }) => (
     </div>
 );
 
-const SettingsView = () => (
+const SettingsView = ({ user }) => (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in-up">
         {/* Profile Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row items-center gap-8">
             <div className="relative">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                    T
+                    {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="absolute bottom-0 right-0 p-2 bg-white rounded-full border border-gray-100 shadow-sm cursor-pointer hover:bg-gray-50 text-blue-600">
                     <Settings size={16} />
                 </div>
             </div>
             <div className="text-center md:text-left flex-1">
-                <h3 className="text-2xl font-bold text-gray-900">Trader Account</h3>
-                <p className="text-gray-500">trader@example.com</p>
+                <h3 className="text-2xl font-bold text-gray-900">{user.name}</h3>
+                <p className="text-gray-500">{user.email}</p>
                 <div className="flex gap-3 mt-4 justify-center md:justify-start">
                     <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-100">Pro Plan</span>
                     <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100">Verified</span>

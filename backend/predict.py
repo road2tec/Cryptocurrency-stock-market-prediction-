@@ -8,6 +8,7 @@ import requests
 import pandas as pd
 from textblob import TextBlob
 from dotenv import load_dotenv
+from email_utils import send_alert_email
 
 load_dotenv()
 
@@ -214,6 +215,11 @@ def predict():
         # Save to DB
         predictions_collection.insert_one(result)
         result['_id'] = str(result['_id'])
+
+        # Send Email Alert if user email is provided
+        user_email = data.get('email')
+        if user_email:
+            send_alert_email(user_email, coin, alert, round(float(predicted_price), 2))
         
         return jsonify(result), 200
 
